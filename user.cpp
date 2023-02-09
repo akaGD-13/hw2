@@ -1,4 +1,6 @@
 #include "user.h"
+#include <vector>
+#include "product.h"
 using namespace std;
 
 User::User() : name_("unknown"), balance_(0.0), type_(1)

@@ -9,6 +9,7 @@
 #include "db_parser.h"
 #include "product_parser.h"
 #include "util.h"
+#include "MyDataStore.h"
 
 using namespace std;
 struct ProdNameSorter {
@@ -17,6 +18,8 @@ struct ProdNameSorter {
     }
 };
 void displayProducts(vector<Product*>& hits);
+
+int findUserIndex(vector<User*>& list, string uName);
 
 int main(int argc, char* argv[])
 {
@@ -29,7 +32,7 @@ int main(int argc, char* argv[])
      * Declare your derived DataStore object here replacing
      *  DataStore type to your derived type
      ****************/
-    DataStore ds;
+    MyDataStore ds;
 
 
 
@@ -100,6 +103,75 @@ int main(int argc, char* argv[])
                 done = true;
             }
 	    /* Add support for other commands here */
+            else if ( cmd == "ADD" ) {
+              string username;
+              size_t num;
+              ss >> username;
+              ss >> num;
+              if (ss.fail() || num > hits.size()){
+                cout << "Invalid request" << endl;
+              }
+              else{
+
+                
+                int index = findUserIndex(ds.users_, username);
+                if (index != -1){
+                  ds.users_[index]->cart_.push_back(hits[num-1]);
+                }
+                else{
+                  cout << "Invalid request" << endl; //user not found
+                }
+              }
+
+            }
+            else if ( cmd == "VIEWCART" ) {
+              string username;
+              ss >> username;
+              if (ss.fail()){cout << "Invalid username" << endl;}
+              else{
+              
+              int index = findUserIndex(ds.users_, username);
+              if (index != -1){
+                displayProducts(ds.users_[index]->cart_);
+              }
+              else{
+                cout << "Invalid username" << endl;
+              }
+
+              }
+
+            }
+            else if ( cmd == "BUYCART" ) {
+              string username;
+              ss >> username;
+              if (ss.fail()){cout << "Invalid username" << endl;}
+              else{
+              
+                int index = findUserIndex(ds.users_, username);
+                if (index != -1){
+                  vector<Product*>& the_cart = ds.users_[index]->cart_;
+                  for (size_t i=0; i < the_cart.size(); i++) {// loop through the cart
+                    if (the_cart[i]->getQty() > 0){
+                      //check quantity
+                      if (the_cart[i]->getPrice() < ds.users_[index]->getBalance()){
+                        //check if user's balance is enough
+                        the_cart[i]->subtractQty(1); // qty -1
+                        ds.users_[index]->deductAmount(the_cart[i]->getPrice()); // balance
+                        the_cart.erase(the_cart.begin()+i); //remove item from the cart
+                        i = i-1; //since an item is removed, we need to do this step
+                      }
+
+
+                    }
+                  }
+                }
+                else{
+                  cout << "Invalid username" << endl;
+                }
+
+              }
+
+            }
 
 
 
@@ -120,11 +192,24 @@ void displayProducts(vector<Product*>& hits)
     	cout << "No results found!" << endl;
     	return;
     }
-    std::sort(hits.begin(), hits.end(), ProdNameSorter());
+    // std::sort(hits.begin(), hits.end(), ProdNameSorter());
     for(vector<Product*>::iterator it = hits.begin(); it != hits.end(); ++it) {
         cout << "Hit " << setw(3) << resultNo << endl;
         cout << (*it)->displayString() << endl;
         cout << endl;
         resultNo++;
     }
+}
+
+int findUserIndex(vector<User*>& list, string uName)
+{
+  int index = -1;
+  for (size_t i=0; i < list.size(); i++){
+    if (uName == list[i]->getName()){
+      index = i;
+      break;
+    }
+  }
+  
+  return index;
 }

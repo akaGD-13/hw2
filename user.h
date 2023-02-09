@@ -2,6 +2,8 @@
 #define USER_H
 #include <iostream>
 #include <string>
+#include <vector>
+#include "product.h"
 
 /**
  * Implements User functionality and information storage
@@ -18,9 +20,12 @@ public:
     void deductAmount(double amt);
     virtual void dump(std::ostream& os);
 
+    std::vector<Product*> cart_;
+
 private:
     std::string name_;
     double balance_;
     int type_;
+    
 };
 #endif
